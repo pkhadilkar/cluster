@@ -1,6 +1,7 @@
-package server
+package cluster
 
 const (BROADCAST = -1)
+// Envelope represents a message on cluster network
 type Envelope struct {
     // On the sender side, Pid identifies the receiving peer. If instead, Pid is
     // set to cluster.BROADCAST, the message is sent to all peers. On the receiver side, the
