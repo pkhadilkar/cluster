@@ -46,12 +46,9 @@ func (s *serverImpl) Inbox() chan *Envelope {
 // required to start a server. It represents
 // information in config file in structure
 type Config struct {
-	// List of pids of all servers
-	PidList []int
-	// Port used to send data out on cluster
-	SendPort int
-	// Port used to receive data from cluster
-	ReceivePort int
+	PidList []int // List of pids of all servers
+	SendPort int  // Port used to send data out on cluster
+	ReceivePort int	 // Port used to receive data from cluster
 }
 
 func initializeServer(selfId int, conf *Config) (Server, error) {
