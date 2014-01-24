@@ -42,7 +42,6 @@ func (s *serverImpl) Inbox() chan *Envelope {
 	return s.inbox
 }
 
-
 func initializeServer(selfId int, conf *Config) (Server, error) {
 	s := serverImpl{pid: selfId, peers: conf.PidList}
 	addresses, err := conf.getServerAddressMap()
@@ -57,14 +56,13 @@ func initializeServer(selfId int, conf *Config) (Server, error) {
 	return Server(&s), nil
 }
 
-
-// New function accepts two parameters.
+// New Function accepts two parameters.
 // selfId: Pid of new server
 // configFile: Path to a file containing configuration details.
 // These include ids of all servers, port information.
 func New(selfId int, configFilePath string) (Server, error) {
 
-	conf, err := readConfig(configFilePath)
+	conf, err := ReadConfig(configFilePath)
 	if err != nil {
 		return nil, err
 	}
