@@ -6,9 +6,7 @@ and broadcast messages are supported.
 package cluster
 
 import (
-	"encoding/json"
 	"errors"
-	"io/ioutil"
 )
 
 // buffer size for inbox and outbox channels
@@ -24,6 +22,8 @@ type serverImpl struct {
 	outbox chan *Envelope
 	// channel for inbox messages
 	inbox chan *Envelope
+	// map to get hostname/ IP address given PID
+	addressOf map[int]string
 }
 
 func (s *serverImpl) Pid() int {
@@ -42,17 +42,14 @@ func (s *serverImpl) Inbox() chan *Envelope {
 	return s.inbox
 }
 
-// Config struct represents all config information
-// required to start a server. It represents
-// information in config file in structure
-type Config struct {
-	PidList []int // List of pids of all servers
-	SendPort int  // Port used to send data out on cluster
-	ReceivePort int	 // Port used to receive data from cluster
-}
 
 func initializeServer(selfId int, conf *Config) (Server, error) {
 	s := serverImpl{pid: selfId, peers: conf.PidList}
+	addresses, err := conf.getServerAddressMap()
+	if err != nil {
+		return nil, errors.New("Error in server ip/port information" + err.Error())
+	}
+	s.addressOf = addresses
 	s.outbox = make(chan *Envelope, bufferSize)
 	s.inbox = make(chan *Envelope, bufferSize)
 	// launch goroutines to handle communication
@@ -60,18 +57,6 @@ func initializeServer(selfId int, conf *Config) (Server, error) {
 	return Server(&s), nil
 }
 
-func readConfig(path string) (*Config, error) {
-	data, err := ioutil.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	var conf Config
-	err = json.Unmarshal(data, &conf)
-	if err != nil {
-		return nil, errors.New("Incorrect format in config file.\n" + err.Error())
-	}
-	return &conf, err
-}
 
 // New function accepts two parameters.
 // selfId: Pid of new server
