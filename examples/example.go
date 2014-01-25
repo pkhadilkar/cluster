@@ -31,4 +31,7 @@ func main() {
 	case <-time.After(10 * time.Second):
 		fmt.Println("Waited and waited. Ab thak gaya\n")
 	}
+	// time out to ensure that server started first does not 
+	// exit immediately after receiving message
+	time.Sleep(50 * time.Second)
 }

@@ -51,8 +51,8 @@ func ReadConfig(path string) (*Config, error) {
 // information in config file in structure
 type Config struct {
 	PidList     []int             // List of pids of all servers
-	SendPort    int               // Port used to send data out on cluster
-	ReceivePort int               // Port used to receive data from cluster
+	SendPort    int               // UNUSED: Port used to send data out on cluster
+	ReceivePort int               // UNUSED: Port used to receive data from cluster
 	Servers     map[string]string // map from string ids to socket
 }
 

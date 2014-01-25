@@ -5,6 +5,7 @@ package cluster
 // network
 
 // TODO: Handle errors from handleInPort and handleOutPort
+// TODO: Handle blocking that might occur when sender is not up (Use select)
 
 import (
 	"container/list"
@@ -14,7 +15,7 @@ import (
 // Handleinport listens on port inPort and forwards received messages
 // to channel inbox. It assumes that messages received are gob
 // encoded objects of the type Envelope
-func (s *serverImpl) handleInPort(inbox chan *Envelope) {
+func (s *serverImpl) handleInPort() {
 	responder, _ := zmq.NewSocket(zmq.REP)
 	defer responder.Close()
 	// addressOf map stores mapping from pid to socket
@@ -22,16 +23,16 @@ func (s *serverImpl) handleInPort(inbox chan *Envelope) {
 	for {
 		//     	 fmt.Println("Waiting to receive message from socket")
 		msg, _ := responder.RecvBytes(0)
-		inbox <- BytesToEnvelope(msg)
+		s.inbox <- BytesToEnvelope(msg)
 		responder.Send("got the message", 0)
 	}
 }
 
 // handleOutPort handles messages sent from this server
-func (s *serverImpl) handleOutPort(outbox chan *Envelope) {
+func (s *serverImpl) handleOutPort() {
 	//    fmt.Println("Waiting for message on outbox")
 	for {
-		msg := <-outbox
+		msg := <- s.outbox
 		requester, _ := zmq.NewSocket(zmq.REQ)
 		defer requester.Close()
 		receivers := list.New()

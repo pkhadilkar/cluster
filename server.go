@@ -51,6 +51,8 @@ func initializeServer(selfId int, conf *Config) (Server, error) {
 	s.addressOf = addresses
 	s.outbox = make(chan *Envelope, bufferSize)
 	s.inbox = make(chan *Envelope, bufferSize)
+	go s.handleInPort()
+	go s.handleOutPort()
 	// launch goroutines to handle communication
 	// between channels and cluster
 	return Server(&s), nil
@@ -67,5 +69,13 @@ func New(selfId int, configFilePath string) (Server, error) {
 		return nil, err
 	}
 	s, _ := initializeServer(selfId, conf)
+	return s, err
+}
+
+// NewWithConfi accepts a config object and returns
+// server with appropriate behavior. This method is
+// useful in test code.
+func NewWithConfig(selfId int, c *Config) (Server, error) {
+	s , err := initializeServer(selfId, c)
 	return s, err
 }
