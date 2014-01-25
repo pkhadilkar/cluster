@@ -9,6 +9,7 @@ package cluster
 
 import (
 	"container/list"
+	"fmt"
 	zmq "github.com/pebbe/zmq4"
 )
 
@@ -16,25 +17,38 @@ import (
 // to channel inbox. It assumes that messages received are gob
 // encoded objects of the type Envelope
 func (s *serverImpl) handleInPort() {
-	responder, _ := zmq.NewSocket(zmq.REP)
+	responder, err := zmq.NewSocket(zmq.REP)
+	if err != nil {
+		fmt.Println("Error in creating socket.", err)
+		return
+	}
 	defer responder.Close()
 	// addressOf map stores mapping from pid to socket
 	responder.Bind("tcp://" + s.addressOf[s.pid])
 	for {
 		//     	 fmt.Println("Waiting to receive message from socket")
-		msg, _ := responder.RecvBytes(0)
+		msg, err := responder.RecvBytes(0)
+		if err != nil {
+			fmt.Println("Error in handleInPort ", err.Error())
+		}
 		s.inbox <- BytesToEnvelope(msg)
-		responder.Send("got the message", 0)
+		responder.Send("1", 0)
 	}
 }
 
 // handleOutPort handles messages sent from this server
 func (s *serverImpl) handleOutPort() {
 	//    fmt.Println("Waiting for message on outbox")
+
 	for {
-		msg := <- s.outbox
-		requester, _ := zmq.NewSocket(zmq.REQ)
-		defer requester.Close()
+		msg := <-s.outbox
+		requester, err := zmq.NewSocket(zmq.REQ)
+		// do not use defer
+		if err != nil {
+			fmt.Println("Error in creating request socket. ", err.Error())
+			return
+		}
+
 		receivers := list.New()
 
 		if msg.Pid != BROADCAST {
@@ -51,9 +65,13 @@ func (s *serverImpl) handleOutPort() {
 			if socketStr, ok := socket.Value.(string); ok {
 				requester.Connect("tcp://" + string(socketStr))
 				requester.SendBytes(EnvelopeToBytes(msg), 0)
-				requester.Recv(0)
+				_, err := requester.Recv(0)
+				if err != nil {
+					fmt.Println("error in send", err.Error())
+					break
+				}
 			}
 		}
-
+		requester.Close()
 	}
 }

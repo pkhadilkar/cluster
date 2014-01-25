@@ -76,6 +76,6 @@ func New(selfId int, configFilePath string) (Server, error) {
 // server with appropriate behavior. This method is
 // useful in test code.
 func NewWithConfig(selfId int, c *Config) (Server, error) {
-	s , err := initializeServer(selfId, c)
+	s, err := initializeServer(selfId, c)
 	return s, err
 }
