@@ -46,10 +46,6 @@ func receive(inbox chan *Envelope, count int, done chan bool) {
 	receiveMessages(inbox, count)
 	//	fmt.Println("Receiver done")
 	done <- true
-	// keep receiving messages otherwise other servers might block
-	/*	for {
-		receiveMessages(inbox, count)
-	}*/
 }
 
 // TestOnwaySend creates two servers, sends large number of messages

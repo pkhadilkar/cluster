@@ -27,7 +27,7 @@ func TestMutliBroadcast(t *testing.T) {
 		servers[i] = s
 	}
 	// start receive message loop for each server first
-	count := 1000
+	count := 10000
 	done := make(chan bool, serverCount)
 
 	for i := 1; i <= serverCount; i += 1 {
@@ -47,7 +47,7 @@ func TestMutliBroadcast(t *testing.T) {
 			if completed == 0 {
 				break
 			}
-		case <-time.After(2 * time.Minute):
+		case <-time.After(5 * time.Minute):
 			t.Errorf("Did not receive all broadcast messages. Number of servers who received all messages were ", strconv.Itoa(serverCount-completed))
 			break
 		}
