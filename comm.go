@@ -42,12 +42,6 @@ func (s *serverImpl) handleOutPort() {
 
 	for {
 		msg := <-s.outbox
-		requester, err := zmq.NewSocket(zmq.REQ)
-		// do not use defer
-		if err != nil {
-			fmt.Println("Error in creating request socket. ", err.Error())
-			return
-		}
 
 		receivers := list.New()
 
@@ -62,16 +56,23 @@ func (s *serverImpl) handleOutPort() {
 		}
 		// send message to receivers
 		for socket := receivers.Front(); socket != nil; socket = socket.Next() {
+			requester, err := zmq.NewSocket(zmq.REQ)
+			if err != nil {
+				fmt.Println("Error in creating request socket. ", err.Error())
+				return
+			}
 			if socketStr, ok := socket.Value.(string); ok {
 				requester.Connect("tcp://" + string(socketStr))
 				requester.SendBytes(EnvelopeToBytes(msg), 0)
 				_, err := requester.Recv(0)
 				if err != nil {
 					fmt.Println("error in send", err.Error())
+					requester.Close()
 					break
 				}
 			}
+			requester.Close()
 		}
-		requester.Close()
+
 	}
 }

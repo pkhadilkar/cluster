@@ -18,7 +18,7 @@ func sendMessages(outbox chan *Envelope, count int, to int) {
 	for i := 0; i < count; i += 1 {
 		outbox <- &Envelope{Pid: to, Msg: "hello there" + strconv.Itoa(i)}
 		if i%10 == 0 {
-			fmt.Println("Sender sleeping ", i)
+			//			fmt.Println("Sender sleeping ", i)
 			time.Sleep(delayInMillis * time.Millisecond)
 		}
 	}
@@ -26,18 +26,30 @@ func sendMessages(outbox chan *Envelope, count int, to int) {
 }
 
 // receiveMessage receives messages on inbox. Count indicates
-// expected number of messages. If this routine receives
-// "count" messages on inbox, it writes true to done channel
-func receiveMessages(inbox chan *Envelope, count int, done chan bool) {
+// expected number of messages
+func receiveMessages(inbox chan *Envelope, count int) {
 	for {
 		<-inbox
 		count--
-		fmt.Println(count)
+		//		fmt.Println(count)
 		if count == 0 {
-			done <- true
 			break
 		}
 	}
+}
+
+// receive acts as a wrapper for receiveMessages and adds
+// channel synchronization to ensure that caller waits
+// till receiveMessages completes
+func receive(inbox chan *Envelope, count int, done chan bool) {
+	//	fmt.Println("Receiver count is ", strconv.Itoa(count))
+	receiveMessages(inbox, count)
+	//	fmt.Println("Receiver done")
+	done <- true
+	// keep receiving messages otherwise other servers might block
+	/*	for {
+		receiveMessages(inbox, count)
+	}*/
 }
 
 // TestOnwaySend creates two servers, sends large number of messages
@@ -55,8 +67,15 @@ func TestOneWaySend(t *testing.T) {
 	}
 
 	done := make(chan bool, 1)
-	count := 1000
-	go receiveMessages(receiver.Inbox(), count, done)
+	count := 10000
+	go receive(receiver.Inbox(), count, done)
 	go sendMessages(sender.Outbox(), count, 2)
-	<-done
+	select {
+	case <-done:
+		fmt.Println("TestOneWaySend passed successfully")
+		break
+	case <-time.After(5 * time.Minute):
+		t.Errorf("Could not send ", strconv.Itoa(count), " messages in 1 minute")
+		break
+	}
 }
