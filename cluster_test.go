@@ -14,9 +14,9 @@ const delayInMillis = 50
 // sendMessage sends "count" number of messages on channel
 // outbox. The id of server to whom the messages should be
 // sent is given by "to"
-func sendMessages(outbox chan *Envelope, count int, to int) {
+func sendMessages(outbox chan *Envelope, count int, to int, from int) {
 	for i := 0; i < count; i += 1 {
-		outbox <- &Envelope{Pid: to, Msg: "hello there" + strconv.Itoa(i)}
+		outbox <- &Envelope{Pid: to, Msg: strconv.Itoa(from) + ":" + strconv.Itoa(i)}
 		if i%10 == 0 {
 			//			fmt.Println("Sender sleeping ", i)
 			time.Sleep(delayInMillis * time.Millisecond)
@@ -26,24 +26,32 @@ func sendMessages(outbox chan *Envelope, count int, to int) {
 }
 
 // receiveMessage receives messages on inbox. Count indicates
-// expected number of messages
-func receiveMessages(inbox chan *Envelope, count int) {
+// expected number of messages. Every receiveMessages gets a
+// map of its own. Thus, no synchronization is needed while
+// accessing the map.
+func receiveMessages(inbox chan *Envelope, messages map[string]bool) {
 	for {
-		<-inbox
-		count--
-		//		fmt.Println(count)
-		if count == 0 {
-			break
+		envelope := <-inbox
+
+		if msg, ok := envelope.Msg.(string); ok {
+			if _, ok := messages[msg]; ok {
+				delete(messages, msg)
+			}
 		}
+
+		if len(messages) == 0 {
+			return
+		}
+		//		fmt.Println(count)
 	}
 }
 
 // receive acts as a wrapper for receiveMessages and adds
 // channel synchronization to ensure that caller waits
 // till receiveMessages completes
-func receive(inbox chan *Envelope, count int, done chan bool) {
+func receive(inbox chan *Envelope, messages map[string]bool, done chan bool) {
 	//	fmt.Println("Receiver count is ", strconv.Itoa(count))
-	receiveMessages(inbox, count)
+	receiveMessages(inbox, messages)
 	//	fmt.Println("Receiver done")
 	done <- true
 }
@@ -51,6 +59,7 @@ func receive(inbox chan *Envelope, count int, done chan bool) {
 // TestOnwaySend creates two servers, sends large number of messages
 // from one server to another and checks that messages are received
 func TestOneWaySend(t *testing.T) {
+	fmt.Println("Starting one way send test. Be patient, the test may run for several minutes")
 	conf := Config{PidList: []int{1, 2}, Servers: map[string]string{"1": "127.0.0.1:5001", "2": "127.0.0.1:5002"}}
 	sender, err := NewWithConfig(1, &conf)
 	if err != nil {
@@ -64,14 +73,20 @@ func TestOneWaySend(t *testing.T) {
 
 	done := make(chan bool, 1)
 	count := 10000
-	go receive(receiver.Inbox(), count, done)
-	go sendMessages(sender.Outbox(), count, 2)
+	// create map of expected messages
+	messages := make(map[string]bool, count)
+	for i := 0; i < count; i += 1 {
+		messages[strconv.Itoa(1)+":"+strconv.Itoa(i)] = true
+	}
+
+	go receive(receiver.Inbox(), messages, done)
+	go sendMessages(sender.Outbox(), count, 2, 1)
 	select {
 	case <-done:
 		fmt.Println("TestOneWaySend passed successfully")
 		break
 	case <-time.After(5 * time.Minute):
-		t.Errorf("Could not send ", strconv.Itoa(count), " messages in 1 minute")
+		t.Errorf("Could not send ", strconv.Itoa(count), " messages in 5 minute")
 		break
 	}
 }

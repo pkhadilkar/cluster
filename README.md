@@ -22,12 +22,12 @@ $ go test github.com/pkhadilkar/cluster
 Test cases:
 
 + One way message send :
- Send 10k messages from one server to the other and check the number of messages received
+ Send 10k messages from one server to the other and check the number and contents of messages received
 
 + Multiple server broadcast : 
-Launches 5 servers each of which broadcasts 10k messages. Each servers confirms that it has received (serverCount - 1) * numMsg messages.
+Launches 5 servers each of which broadcasts 10k messages. Each servers confirms that it has received (serverCount - 1) * numMsg messages from remaining servers.
 
-If you write additional test cases, ensure that port numbers are not same as the ones used in other test cases. The servers are service endpoints and keep listening on their endpoints untill the main process that started them completes.
+Tests are known to take a few minutes due to verification. If you write additional test cases, ensure that port numbers are not same as the ones used in other test cases. The servers are service endpoints and keep listening on their endpoints untill the main process that started them completes.
 
 Config File
 ---------------

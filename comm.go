@@ -54,6 +54,9 @@ func (s *serverImpl) handleOutPort() {
 				}
 			}
 		}
+		// change msg.Pid to match this server
+		// receiving server will then find correct Pid
+		msg.Pid = s.Pid()
 		// send message to receivers
 		for socket := receivers.Front(); socket != nil; socket = socket.Next() {
 			requester, err := zmq.NewSocket(zmq.REQ)
