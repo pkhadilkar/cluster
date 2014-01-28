@@ -30,6 +30,42 @@ func BytesToEnvelope(gobbed []byte) *Envelope {
 	return &ungobbed
 }
 
+func CatalogToBytes(e *Catalog) []byte {
+     var buf bytes.Buffer
+     enc := gob.NewEncoder(&buf)
+     enc.Encode(e)
+     return buf.Bytes()
+}
+
+func BytesToCatalog(gobbed []byte) (*Catalog, error) {
+	buf := bytes.NewBuffer(gobbed)
+	dec := gob.NewDecoder(buf)
+	var ungobbed Catalog
+	err := dec.Decode(&ungobbed)
+	if err != nil {
+		return nil, err
+	}
+	return &ungobbed, err
+}
+
+func ClusterMemberToBytes(e *ClusterMember) []byte {
+     var buf bytes.Buffer
+     enc := gob.NewEncoder(&buf)
+     enc.Encode(e)
+     return buf.Bytes()
+}
+
+func BytesToClusterMember(gobbed []byte) (*ClusterMember, error) {
+	buf := bytes.NewBuffer(gobbed)
+	dec := gob.NewDecoder(buf)
+	var ungobbed ClusterMember
+	err := dec.Decode(&ungobbed)
+	if err != nil {
+		return nil, err
+	}
+	return &ungobbed, err
+}
+
 // ReadConfig reads configuration file information into Config object
 // parameters:
 // path : Path to config file
