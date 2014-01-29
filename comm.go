@@ -25,15 +25,18 @@ func (s *serverImpl) handleInPort() {
 	}
 	defer responder.Close()
 	// addressOf map stores mapping from pid to socket
-	responder.Bind("tcp://" + strconv.Itoa(s.port))
+	responder.Bind("tcp://" + s.IP + ":" + strconv.Itoa(s.port))
 	for {
-		fmt.Println("handleInPort: Waiting to receive message from socket for pid", s.pid)
+		fmt.Println("handleInPort: Waiting to receive message from socket for pid", s.pid, "on", s.port)
 		msg, err := responder.RecvBytes(0)
+		fmt.Println("handleInPort: Received message")
 		if err != nil {
 			fmt.Println("Error in handleInPort ", err.Error())
 		}
 		s.inbox <- BytesToEnvelope(msg)
+		fmt.Println("handleInPort: Message ", BytesToEnvelope(msg))
 		responder.Send("1", 0)
+		fmt.Println("handleInPort: sent reply")
 	}
 }
 
@@ -49,7 +52,7 @@ func (s *serverImpl) handleOutPort() {
 
 		receivers := list.New()
 		// BROADCAST packet or packet for new server
-		if _, ok := s.addressOf[msg.Pid] ; !ok {
+		if _, ok := s.addressOf[msg.Pid]; !ok {
 			s.refreshPeerCache(msg.Pid)
 			// packet is dropped silently
 			if _, ok := s.addressOf[msg.Pid]; !ok && msg.Pid != BROADCAST {
@@ -79,9 +82,12 @@ func (s *serverImpl) handleOutPort() {
 				return
 			}
 			if socketStr, ok := socket.Value.(string); ok {
+				fmt.Println("handleOutPort: ", s.pid , " sending message to ", string(socketStr))
 				requester.Connect("tcp://" + string(socketStr))
 				requester.SendBytes(EnvelopeToBytes(msg), 0)
+				fmt.Println("handleOutPort: ", s.pid, " message sent")
 				_, err := requester.Recv(0)
+				fmt.Println("handleOutPort: ", s.pid, " received reply")
 				if err != nil {
 					fmt.Println("error in send", err.Error())
 					requester.Close()
@@ -97,33 +103,33 @@ func (s *serverImpl) handleOutPort() {
 // refreshPeerCache tries to contact peer server to get
 // details about new server. The server returns a list of
 // all peers. Server updates its cache with new list
-func (s *serverImpl)refreshPeerCache(pid int) error {
+func (s *serverImpl) refreshPeerCache(pid int) error {
 	// retry three times
 	var err error
 	err = nil
 	fmt.Println("refreshPeerCache: refreshing cache")
-	for retryCount := 0 ; retryCount < 3; retryCount += 1 {
+	for retryCount := 0; retryCount < 3; retryCount += 1 {
 		requester, err := zmq.NewSocket(zmq.REQ)
 		if err != nil {
 			return err
 		}
-		
+
 		err = requester.Connect("tcp://" + s.peerSocket)
-		
+
 		// actual content does not matter here
 		_, err = requester.Send("1", 0)
-		
+
 		catBytes, err := requester.RecvBytes(0)
-		
+
 		if err != nil {
 			fmt.Println("Error in receiving data from Peer registry server. Retrying ....\n", err.Error())
 			requester.Close()
 			continue
 		}
-		
+
 		var catalog *Catalog
 		catalog, err = BytesToCatalog(catBytes)
-		
+
 		if err != nil {
 			fmt.Println("Error in decoding catalog data. Retrying ....\n", err.Error())
 			requester.Close()

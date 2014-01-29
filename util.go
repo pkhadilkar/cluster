@@ -5,9 +5,9 @@ import (
 	"encoding/gob"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
 	"strconv"
-	"fmt"
 )
 
 // This file contains utility functions for cluster
@@ -81,7 +81,7 @@ func ReadConfig(path string) (*Config, error) {
 		fmt.Println("Error", err.Error())
 		return nil, errors.New("Incorrect format in config file.\n" + err.Error())
 	}
-	fmt.Println("Config is " , conf)
+	fmt.Println("Config is ", conf)
 	return &conf, err
 }
 
@@ -89,10 +89,10 @@ func ReadConfig(path string) (*Config, error) {
 // required to start a server. It represents
 // information in config file in structure
 type Config struct {
-	PidList     []int             // List of pids of all servers
-	Servers     map[string]string // map from string ids to socket
-	MemberRegSocket string // socket to connect to , to register a server
-	PeerSocket string  // socket to connect to , to get a list of peers
+	PidList         []int             // List of pids of all servers
+	Servers         map[string]string // map from string ids to socket
+	MemberRegSocket string            // socket to connect to , to register a server
+	PeerSocket      string            // socket to connect to , to get a list of peers
 }
 
 // ClusterMember is used by new cluster members in their
@@ -106,7 +106,6 @@ type ClusterMember struct {
 	// Inbox port for the server
 	Port int
 }
-
 
 // Gets map from Pids to sockets from config
 func (c *Config) getServerAddressMap() (map[int]string, error) {

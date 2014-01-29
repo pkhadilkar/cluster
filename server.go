@@ -6,10 +6,10 @@ and broadcast messages are supported.
 package cluster
 
 import (
-	zmq "github.com/pebbe/zmq4"
 	"fmt"
-	"strings"
+	zmq "github.com/pebbe/zmq4"
 	"strconv"
+	"strings"
 )
 
 // buffer size for inbox and outbox channels
@@ -17,15 +17,15 @@ const bufferSize = 100
 
 // serverImpl is a type that implements server interface
 type serverImpl struct {
-	IP string // server's IP
-	port int  // server's input port
-	pid int // own id
-	peers []int // ids of peers
-	outbox chan *Envelope // channel for outbox messages
-	inbox chan *Envelope // channel for inbox messages
-	addressOf map[int]string // map to get hostname/ IP address given PID
-	memberRegSocket string //socket to connect to , to register new server
-	peerSocket string // socket to contact to get list of peers
+	IP              string         // server's IP
+	port            int            // server's input port
+	pid             int            // own id
+	peers           []int          // ids of peers
+	outbox          chan *Envelope // channel for outbox messages
+	inbox           chan *Envelope // channel for inbox messages
+	addressOf       map[int]string // map to get hostname/ IP address given PID
+	memberRegSocket string         //socket to connect to , to register new server
+	peerSocket      string         // socket to contact to get list of peers
 }
 
 const retryCount = 100 //retry count to contact registration server
@@ -35,9 +35,9 @@ const retryCount = 100 //retry count to contact registration server
 // unless that server responds, the Server is not in cluster
 func (s *serverImpl) register() error {
 	var err error
-	member := ClusterMember{Pid : s.pid, IP : s.IP, Port : s.port}
+	member := ClusterMember{Pid: s.pid, IP: s.IP, Port: s.port}
 	buf := ClusterMemberToBytes(&member)
-	for i := 0; i < retryCount; i+=1 {
+	for i := 0; i < retryCount; i += 1 {
 		requester, err := zmq.NewSocket(zmq.REQ)
 		if err != nil {
 			fmt.Println("register(): Error in creating new socket.", err.Error())
@@ -58,7 +58,6 @@ func (s *serverImpl) register() error {
 	return err
 }
 
-
 func (s *serverImpl) Pid() int {
 	return s.pid
 }
@@ -76,7 +75,7 @@ func (s *serverImpl) Inbox() chan *Envelope {
 }
 
 func initializeServer(selfId int, selfIP string, selfPort int, conf *Config) (Server, error) {
-	s := serverImpl{pid: selfId, IP : selfIP, port : selfPort}
+	s := serverImpl{pid: selfId, IP: selfIP, port: selfPort}
 	s.outbox = make(chan *Envelope, bufferSize)
 	s.inbox = make(chan *Envelope, bufferSize)
 	s.memberRegSocket = conf.MemberRegSocket
@@ -113,9 +112,10 @@ func NewWithConfig(selfId int, selfIP string, selfPort int, c *Config) (Server, 
 	s, err := initializeServer(selfId, selfIP, selfPort, c)
 	return s, err
 }
+
 // NewProxy launches a new Proxy that handles member registration
 // and accepts requests to get a list of current members. This
-// function must be called on the server where we want 
+// function must be called on the server where we want
 func NewProxy(configPath string) error {
 	conf, err := ReadConfig(configPath)
 	if err != nil {
@@ -129,6 +129,7 @@ func NewProxy(configPath string) error {
 	go sendClusterMembers(peerPort)
 	return err
 }
+
 // getPort returns a port given a socket of the form "IP:port"
 // TODO: Add error check here
 func getPort(socket string) int {

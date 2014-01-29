@@ -33,7 +33,7 @@ func acceptClusterMember(port int) {
 	defer responder.Close()
 	responder.Bind("tcp://*:" + strconv.Itoa(port))
 	for {
-		 fmt.Println("Waiting to receive message from socket")
+		fmt.Println("Waiting to receive message from socket")
 		msg, err := responder.RecvBytes(0)
 		if err != nil {
 			fmt.Println("Error in acceptClusterMember ", err.Error())
@@ -51,10 +51,9 @@ func acceptClusterMember(port int) {
 	}
 }
 
-
 func recordMember(member *ClusterMember, catalog *Catalog) {
 	catalog.mutex.Lock()
-	catalog.Records[member.Pid] = member.IP + strconv.Itoa(member.Port)
+	catalog.Records[member.Pid] = member.IP +":" + strconv.Itoa(member.Port)
 	catalog.mutex.Unlock()
 }
 
