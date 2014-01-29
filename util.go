@@ -7,6 +7,7 @@ import (
 	"errors"
 	"io/ioutil"
 	"strconv"
+	"fmt"
 )
 
 // This file contains utility functions for cluster
@@ -31,10 +32,10 @@ func BytesToEnvelope(gobbed []byte) *Envelope {
 }
 
 func CatalogToBytes(e *Catalog) []byte {
-     var buf bytes.Buffer
-     enc := gob.NewEncoder(&buf)
-     enc.Encode(e)
-     return buf.Bytes()
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	enc.Encode(e)
+	return buf.Bytes()
 }
 
 func BytesToCatalog(gobbed []byte) (*Catalog, error) {
@@ -49,10 +50,10 @@ func BytesToCatalog(gobbed []byte) (*Catalog, error) {
 }
 
 func ClusterMemberToBytes(e *ClusterMember) []byte {
-     var buf bytes.Buffer
-     enc := gob.NewEncoder(&buf)
-     enc.Encode(e)
-     return buf.Bytes()
+	var buf bytes.Buffer
+	enc := gob.NewEncoder(&buf)
+	enc.Encode(e)
+	return buf.Bytes()
 }
 
 func BytesToClusterMember(gobbed []byte) (*ClusterMember, error) {
@@ -63,7 +64,7 @@ func BytesToClusterMember(gobbed []byte) (*ClusterMember, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &ungobbed, err
+	return &ungobbed, nil
 }
 
 // ReadConfig reads configuration file information into Config object
@@ -77,8 +78,10 @@ func ReadConfig(path string) (*Config, error) {
 	var conf Config
 	err = json.Unmarshal(data, &conf)
 	if err != nil {
+		fmt.Println("Error", err.Error())
 		return nil, errors.New("Incorrect format in config file.\n" + err.Error())
 	}
+	fmt.Println("Config is " , conf)
 	return &conf, err
 }
 
@@ -87,10 +90,23 @@ func ReadConfig(path string) (*Config, error) {
 // information in config file in structure
 type Config struct {
 	PidList     []int             // List of pids of all servers
-	SendPort    int               // UNUSED: Port used to send data out on cluster
-	ReceivePort int               // UNUSED: Port used to receive data from cluster
 	Servers     map[string]string // map from string ids to socket
+	MemberRegSocket string // socket to connect to , to register a server
+	PeerSocket string  // socket to connect to , to get a list of peers
 }
+
+// ClusterMember is used by new cluster members in their
+// message to primary about joining the cluster
+type ClusterMember struct {
+	// Pid of the newly joined server.
+	// Unique across all cluster members
+	Pid int
+	// IP address of the member
+	IP string
+	// Inbox port for the server
+	Port int
+}
+
 
 // Gets map from Pids to sockets from config
 func (c *Config) getServerAddressMap() (map[int]string, error) {
