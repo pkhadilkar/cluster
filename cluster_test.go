@@ -60,13 +60,20 @@ func receive(inbox chan *Envelope, messages map[string]bool, done chan bool) {
 // from one server to another and checks that messages are received
 func TestOneWaySend(t *testing.T) {
 	fmt.Println("Starting one way send test. Be patient, the test may run for several minutes")
-	conf := Config{PidList: []int{1, 2}, Servers: map[string]string{"1": "127.0.0.1:5001", "2": "127.0.0.1:5002"}}
-	sender, err := NewWithConfig(1, &conf)
+	conf := Config{MemberRegSocket: "127.0.0.1:9999", PeerSocket: "127.0.0.1:9009"}
+
+	// launch proxy server
+	go acceptClusterMember(9999)
+	go sendClusterMembers(9009)
+
+	time.Sleep(100 * time.Millisecond)
+
+	sender, err := NewWithConfig(1, "127.0.0.1", 5001, &conf)
 	if err != nil {
 		t.Errorf("Error in creating server ", err.Error())
 	}
 
-	receiver, err := NewWithConfig(2, &conf)
+	receiver, err := NewWithConfig(2, "127.0.0.1", 5002, &conf)
 	if err != nil {
 		t.Errorf("Error in creating server ", err.Error())
 	}

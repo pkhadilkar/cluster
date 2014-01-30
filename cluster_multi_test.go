@@ -1,5 +1,6 @@
 package cluster
 
+/*
 import (
 	"fmt"
 	"strconv"
@@ -7,14 +8,14 @@ import (
 	"testing"
 	"time"
 )
-
+*/
 /*
 TestMultiSendReceive creates serverCount = 5 servers. Each server broadcasts
 msgCount = 10000 messages. Receivers check whether they receive
 (serverCount - 1) * msgCount messages. The msg sending works fast, verification
 of received messages takes time and memory
-*/
-func TestMutliBroadcast(t *testing.T) {
+*/ /*
+func _TestMutliBroadcast(t *testing.T) {
 	fmt.Println("Starting multibroadcast test. Be patient, the test can run for several minutes.")
 	conf := Config{PidList: []int{1, 2, 3, 4, 5}, Servers: map[string]string{"1": "127.0.0.1:5004",
 		"2": "127.0.0.1:5005", "3": "127.0.0.1:5006", "4": "127.0.0.1:5007",
@@ -74,3 +75,4 @@ func TestMutliBroadcast(t *testing.T) {
 	}
 	fmt.Println("TestMultiBroadcast passed successfully")
 }
+*/

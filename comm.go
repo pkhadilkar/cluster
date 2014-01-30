@@ -27,22 +27,22 @@ func (s *serverImpl) handleInPort() {
 	// addressOf map stores mapping from pid to socket
 	responder.Bind("tcp://" + s.IP + ":" + strconv.Itoa(s.port))
 	for {
-		fmt.Println("handleInPort: Waiting to receive message from socket for pid", s.pid, "on", s.port)
+		//		fmt.Println("handleInPort: Waiting to receive message from socket for pid", s.pid, "on", s.port)
 		msg, err := responder.RecvBytes(0)
-		fmt.Println("handleInPort: Received message")
+		//		fmt.Println("handleInPort: Received message")
 		if err != nil {
 			fmt.Println("Error in handleInPort ", err.Error())
 		}
 		s.inbox <- BytesToEnvelope(msg)
-		fmt.Println("handleInPort: Message ", BytesToEnvelope(msg))
+		//		fmt.Println("handleInPort: Message ", BytesToEnvelope(msg))
 		responder.Send("1", 0)
-		fmt.Println("handleInPort: sent reply")
+		//		fmt.Println("handleInPort: sent reply")
 	}
 }
 
 // handleOutPort handles messages sent from this server
 func (s *serverImpl) handleOutPort() {
-	fmt.Println("Waiting for message on outbox")
+	//	fmt.Println("handleOutPort: Waiting for message on outbox")
 	// initial cache refresh
 	s.addressOf = make(map[int]string)
 	s.refreshPeerCache(BROADCAST)
@@ -82,12 +82,12 @@ func (s *serverImpl) handleOutPort() {
 				return
 			}
 			if socketStr, ok := socket.Value.(string); ok {
-				fmt.Println("handleOutPort: ", s.pid , " sending message to ", string(socketStr))
+				//	fmt.Println("handleOutPort: ", s.pid , " sending message to ", string(socketStr))
 				requester.Connect("tcp://" + string(socketStr))
 				requester.SendBytes(EnvelopeToBytes(msg), 0)
-				fmt.Println("handleOutPort: ", s.pid, " message sent")
+				//	fmt.Println("handleOutPort: ", s.pid, " message sent")
 				_, err := requester.Recv(0)
-				fmt.Println("handleOutPort: ", s.pid, " received reply")
+				//	fmt.Println("handleOutPort: ", s.pid, " received reply")
 				if err != nil {
 					fmt.Println("error in send", err.Error())
 					requester.Close()

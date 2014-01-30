@@ -33,7 +33,7 @@ func acceptClusterMember(port int) {
 	defer responder.Close()
 	responder.Bind("tcp://*:" + strconv.Itoa(port))
 	for {
-		fmt.Println("Waiting to receive message from socket")
+		//		fmt.Println("Waiting to receive message from socket")
 		msg, err := responder.RecvBytes(0)
 		if err != nil {
 			fmt.Println("Error in acceptClusterMember ", err.Error())
@@ -41,7 +41,7 @@ func acceptClusterMember(port int) {
 
 		member, err := BytesToClusterMember(msg)
 		if err == nil {
-			fmt.Println("Adding member", member)
+			fmt.Println("acceptClusterMember : Adding member", member)
 			recordMember(member, &catalog)
 		} else {
 			fmt.Println("Received object which is not of type ClusterMember")
@@ -53,7 +53,7 @@ func acceptClusterMember(port int) {
 
 func recordMember(member *ClusterMember, catalog *Catalog) {
 	catalog.mutex.Lock()
-	catalog.Records[member.Pid] = member.IP +":" + strconv.Itoa(member.Port)
+	catalog.Records[member.Pid] = member.IP + ":" + strconv.Itoa(member.Port)
 	catalog.mutex.Unlock()
 }
 
@@ -68,7 +68,7 @@ func sendClusterMembers(port int) {
 	defer responder.Close()
 	responder.Bind("tcp://*:" + strconv.Itoa(port))
 	for {
-		fmt.Println("sendClusterMembers: Waiting for request for sendClusterMembers")
+		//		fmt.Println("sendClusterMembers: Waiting for request for sendClusterMembers")
 		//     	 fmt.Println("Waiting to receive message from socket")
 		if _, err = responder.RecvBytes(0); err != nil {
 			fmt.Println("Error in sendClusterMembers", err.Error())
@@ -77,7 +77,7 @@ func sendClusterMembers(port int) {
 		catalog.mutex.Lock()
 		buf := CatalogToBytes(&catalog)
 		catalog.mutex.Unlock()
-		fmt.Println("sendClusterMembers: sending ", catalog)
+		//		fmt.Println("sendClusterMembers: sending ", catalog)
 		responder.SendBytes(buf, 0)
 	}
 }

@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"strconv"
 )
 
 // This file contains utility functions for cluster
@@ -89,10 +88,8 @@ func ReadConfig(path string) (*Config, error) {
 // required to start a server. It represents
 // information in config file in structure
 type Config struct {
-	PidList         []int             // List of pids of all servers
-	Servers         map[string]string // map from string ids to socket
-	MemberRegSocket string            // socket to connect to , to register a server
-	PeerSocket      string            // socket to connect to , to get a list of peers
+	MemberRegSocket string // socket to connect to , to register a server
+	PeerSocket      string // socket to connect to , to get a list of peers
 }
 
 // ClusterMember is used by new cluster members in their
@@ -105,18 +102,4 @@ type ClusterMember struct {
 	IP string
 	// Inbox port for the server
 	Port int
-}
-
-// Gets map from Pids to sockets from config
-func (c *Config) getServerAddressMap() (map[int]string, error) {
-	addressOf := make(map[int]string)
-	for key, value := range c.Servers {
-		// bitSize 0 for int
-		i, err := strconv.ParseInt(key, 10, 0)
-		if err != nil {
-			return nil, err
-		}
-		addressOf[int(i)] = value
-	}
-	return addressOf, nil
 }

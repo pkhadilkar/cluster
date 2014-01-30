@@ -45,7 +45,7 @@ func (s *serverImpl) register() error {
 		}
 		requester.Connect("tcp://" + s.memberRegSocket)
 		requester.SendBytes(buf, 0)
-		fmt.Println("")
+
 		_, err = requester.Recv(0)
 		// server registered successfully
 		if err == nil {
@@ -80,8 +80,8 @@ func initializeServer(selfId int, selfIP string, selfPort int, conf *Config) (Se
 	s.inbox = make(chan *Envelope, bufferSize)
 	s.memberRegSocket = conf.MemberRegSocket
 	s.peerSocket = conf.PeerSocket
-	fmt.Println("Registering server with proxy")
-	fmt.Println("server : ", s)
+	//fmt.Println("Registering server with proxy")
+	//fmt.Println("server : ", s)
 	// register with proxy
 	s.register()
 	go s.handleInPort()
