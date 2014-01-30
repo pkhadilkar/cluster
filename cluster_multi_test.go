@@ -16,6 +16,8 @@ of received messages takes time and memory
 */
 func TestMutliBroadcast(t *testing.T) {
 	fmt.Println("Starting multibroadcast test. Be patient, the test can run for several minutes.")
+	fmt.Println("MultiBroadcastTest broadcasts 10k messages from each of the five servers launched.")
+	fmt.Println("Each server checks that it has received each of the 40k messages it expects exactly once.")
 	conf := Config{MemberRegSocket: "127.0.0.1:9999", PeerSocket: "127.0.0.1:9009"}
 
 	// launch proxy

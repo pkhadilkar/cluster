@@ -26,7 +26,8 @@ Test cases:
 
 + Multiple server broadcast : 
 Launches 5 servers each of which broadcasts 10k messages. Each servers confirms that it has received (serverCount - 1) * numMsg messages from remaining servers.
-*Note that the tests are known to take upto several minutes as they check whether each message that is sent is received exactly as it was sent*. If you write additional test cases, ensure that port numbers are not same as the ones used in other test cases. The servers are service endpoints and keep listening on their endpoints untill the main process that started them completes.
+*Note that the tests are known to take upto several minutes as they check whether each message that is sent is received exactly as it was sent. If you want to just confirm that behaviour under cases tested is correct faster, reduce the count variable in approrpiate method in test file*. 
+If you write additional test cases, ensure that port numbers are not same as the ones used in other test cases. The servers are service endpoints and keep listening on their endpoints untill the main process that started them completes.
 
 
 Architecture
