@@ -58,7 +58,7 @@ func receive(inbox chan *Envelope, messages map[string]bool, done chan bool) {
 
 // TestOnwaySend creates two servers, sends large number of messages
 // from one server to another and checks that messages are received
-func TestOneWaySend(t *testing.T) {
+func _TestOneWaySend(t *testing.T) {
 	fmt.Println("Starting one way send test. Be patient, the test may run for several minutes")
 	conf := Config{MemberRegSocket: "127.0.0.1:9999", PeerSocket: "127.0.0.1:9009"}
 

@@ -64,7 +64,7 @@ func (s *serverImpl) handleOutPort() {
 		if msg.Pid != BROADCAST {
 			receivers.PushBack(s.addressOf[msg.Pid])
 		} else {
-			fmt.Println("Sending broadcast to ", s.addressOf)
+			//			fmt.Println("Sending broadcast to ", s.addressOf)
 			for key, value := range s.addressOf {
 				if key != s.pid {
 					receivers.PushBack(value)
@@ -107,7 +107,7 @@ func (s *serverImpl) refreshPeerCache(pid int) error {
 	// retry three times
 	var err error
 	err = nil
-	fmt.Println("refreshPeerCache: refreshing cache")
+	//	fmt.Println("refreshPeerCache: refreshing cache")
 	for retryCount := 0; retryCount < 3; retryCount += 1 {
 		requester, err := zmq.NewSocket(zmq.REQ)
 		if err != nil {
@@ -135,7 +135,7 @@ func (s *serverImpl) refreshPeerCache(pid int) error {
 			requester.Close()
 			continue
 		}
-		fmt.Println("Received catalog is ", catalog)
+		//		fmt.Println("Received catalog is ", catalog)
 		// found required entry
 		if _, ok := catalog.Records[pid]; ok || pid == BROADCAST {
 			s.addressOf = catalog.Records

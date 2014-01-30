@@ -11,7 +11,7 @@ Installation
 $ go get github.com/pkhadilkar/cluster
 $ go get build github.com/pkhadilkar/cluster
 ```
-ClusterTalk uses [zmq4](https://github.com/pebbe/zmq4) by pebbe. Zmq4 requires installation of [ZeroMQ](http://zeromq.org/). Installation instruction can be found [here](http://zeromq.org/intro:get-the-software).
+ClusterTalk uses [zmq4](https://github.com/pebbe/zmq4) by pebbe. Zmq4 requires installation of [ZeroMQ](http://zeromq.org/). Installation instruction can be found [here](http://zeromq.org/intro:get-the-software). 
 
 Test
 --------------
@@ -26,11 +26,25 @@ Test cases:
 
 + Multiple server broadcast : 
 Launches 5 servers each of which broadcasts 10k messages. Each servers confirms that it has received (serverCount - 1) * numMsg messages from remaining servers.
+*Note that the tests are known to take upto several minutes as they check whether each message that is sent is received exactly as it was sent*. If you write additional test cases, ensure that port numbers are not same as the ones used in other test cases. The servers are service endpoints and keep listening on their endpoints untill the main process that started them completes.
 
-Tests are known to take a few minutes due to verification. If you write additional test cases, ensure that port numbers are not same as the ones used in other test cases. The servers are service endpoints and keep listening on their endpoints untill the main process that started them completes.
+
+Architecture
+---------------
+ClusterTalk consists of several components
+
+![components.jpg] (https://github.com/pkhadilkar/cluster/images/components.jpg)
+
++ Master / Metadata Server :
+Master node is a server that accepts member registration requests from servers in cluster. It also sends a list of all current members (peer list) to servers upon request. Main purpose of master node is to allow auto-joining of nodes to cluster. Master server does not process actual message data and hence it does not become a bottlneck with increased cluster size / number of messages. It acts as a metadata server. Current version has only one master node. The idea is to add a secondary metadata server (like Secondary name node in Hadoop) which should be in sync with the master and should be able to take over in case master is not available.
+
++ Servers :
+The servers in ClusterTalk are peers. Every server can send/receive messages to/from other servers. Servers can also send a broadcast message to all peers in the cluster. When a new server is launched, it reads address of master from config file and contacts master to register itself. Servers also request master to get a list of peers for broadcast messages. This list is cached in each server. Server also contacts the master when it gets a message with id of a server that is not in its cache. 
+
+*Note that master server should be launched before other servers. See cluster_test.go for details*
 
 Config File
 ---------------
-Configuration file is in JSON format. Configuration file gives information about Pids of servers (which should be unique in one cluster) and logical socket endpoint for each server. Only IP address is not enought as one machine can have more than one server instances. Thus, fixed port and different IP address setup would not work.
+Configuration file is in JSON format. Configuration file stores socket endpoints for member registration and peer information servers.
 
 Pushkar Khadilkar
