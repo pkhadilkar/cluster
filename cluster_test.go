@@ -58,7 +58,7 @@ func receive(inbox chan *Envelope, messages map[string]bool, done chan bool) {
 
 // TestOnwaySend creates two servers, sends large number of messages
 // from one server to another and checks that messages are received
-func _TestOneWaySend(t *testing.T) {
+func TestOneWaySend(t *testing.T) {
 	fmt.Println("Starting one way send test. Be patient, the test may run for several minutes")
 	conf := Config{MemberRegSocket: "127.0.0.1:9999", PeerSocket: "127.0.0.1:9009"}
 
@@ -68,12 +68,12 @@ func _TestOneWaySend(t *testing.T) {
 
 	time.Sleep(100 * time.Millisecond)
 
-	sender, err := NewWithConfig(1, "127.0.0.1", 5001, &conf)
+	sender, err := NewWithConfig(1, "127.0.0.1", 5011, &conf)
 	if err != nil {
 		t.Errorf("Error in creating server ", err.Error())
 	}
 
-	receiver, err := NewWithConfig(2, "127.0.0.1", 5002, &conf)
+	receiver, err := NewWithConfig(2, "127.0.0.1", 5012, &conf)
 	if err != nil {
 		t.Errorf("Error in creating server ", err.Error())
 	}
