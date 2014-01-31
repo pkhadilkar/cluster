@@ -37,10 +37,10 @@ Architecture
 ---------------
 ClusterTalk consists of several components
 
-![components.jpg] (https://github.com/pkhadilkar/cluster/blob/master/images/components.jpg)
+![components.jpg] (https://github.com/pkhadilkar/cluster/blob/master/images/components.jpg?raw=true)
 
 + **Master / Metadata Server** :
- Master node is a server that accepts member registration requests from servers in cluster. It also sends a list of all current members (peer list) to servers upon request. Main purpose of master node is to allow auto-joining of nodes to cluster. Master server does not process actual message data and hence it does not become a bottlneck with increased cluster size / number of messages. It acts as a metadata server. Current version has only one master node. The idea is to add a secondary metadata server (like Secondary name node in Hadoop) which should be in sync with the master and should be able to take over in case master is not available.
+ Master node is a server that accepts member registration requests from servers in cluster. It also sends a list of all current members (peer list) to servers upon request. Main purpose of master node is to allow auto-joining of nodes to cluster. Master server does not process actual message data and hence it does not become a bottlneck with increased cluster size / number of messages. It acts as a metadata server. Current version has only one master node. The idea is to add a secondary metadata server (like Secondary name node in Hadoop) which should be in sync with the master and should be able to take over in case master is not available .
 
 + **Servers** :
  The servers in ClusterTalk are peers. Every server can send/receive messages to/from other servers. Servers can also send a broadcast message to all peers in the cluster. When a new server is launched, it reads address of master from config file and contacts master to register itself. Servers also request master to get a list of peers for broadcast messages. This list is cached in each server. Server also contacts the master when it gets a message with id of a server that is not in its cache. 
