@@ -7,6 +7,7 @@ import (
 	"strconv"
 	"testing"
 	"time"
+	"strings"
 )
 
 const delayInMillis = 50
@@ -27,36 +28,48 @@ func sendMessages(outbox chan *Envelope, count int, to int, from int) {
 	fmt.Println("Sender done sending")
 }
 
-// receiveMessage receives messages on inbox. Count indicates
-// expected number of messages. Every receiveMessages gets a
-// map of its own. Thus, no synchronization is needed while
-// accessing the map.
-func receiveMessages(inbox chan *Envelope, messages map[string]bool) {
+// receive receives messages on inbox. Count indicates expected number of
+// messages. The verification uses following idea.
+// record slice contains one slot for each of the messages. Messages 
+// received are of the form "senderPid:msgId". Every server sends same
+// set of msgIds but prefixes its Pid. We extract msgId and senderPid
+// and set a bit corresponding to server in slot for msgId. For each
+// server, we check that for each slot, the number of bits set is
+// equal to (serverCount - 1) (since server does not receive its
+// own broadcast.
+// Parameters:
+// inbox         : Server inbox channel
+// record        : Temp array to store information about received messages
+// count         : Number of messages expected from each peer server
+// serverCount   : Total number of servers in the cluster
+// done          : Channel to write to when the server receives all expected
+//                 messages
+func receive(inbox chan *Envelope, record []uint32, count int, serverCount int, done chan bool) {
+	receivedCount := count
+	smallestCount := uint32((1 << (uint(serverCount) - 1)) - 1)
 	for {
 		envelope := <-inbox
 
 		if msg, ok := envelope.Msg.(string); ok {
-			if _, ok := messages[msg]; ok {
-				delete(messages, msg)
+			sender := uint(envelope.Pid) - 1 // sender's Pid
+			msgId, _ := strconv.ParseInt(strings.Split(msg, ":")[1], 10, 0)
+			record[msgId] = record[int(msgId)] | (1 << sender)
+			// record[msgId] is all 1's except for one bit. Thus, the smallest
+			// possible valid record[msgId] is (1 << (serverCount - 1)) - 1
+			//fmt.Println(record[msgId] , "\t" , smallestCount)
+			if record[msgId] >= smallestCount && NumberOfBitsSet(record[msgId]) == serverCount - 1 {
+				//fmt.Println(record[msgId])
+				receivedCount--;
 			}
 		}
 
-		if len(messages) == 0 {
-			return
+		if receivedCount == 0 {
+			break
 		}
-		//		fmt.Println(count)
 	}
-}
-
-// receive acts as a wrapper for receiveMessages and adds
-// channel synchronization to ensure that caller waits
-// till receiveMessages completes
-func receive(inbox chan *Envelope, messages map[string]bool, done chan bool) {
-	//	fmt.Println("Receiver count is ", strconv.Itoa(count))
-	receiveMessages(inbox, messages)
-	//	fmt.Println("Receiver done")
 	done <- true
 }
+
 
 // TestOnwaySend creates two servers, sends large number of messages
 // from one server to another and checks that messages are received
@@ -84,13 +97,10 @@ func TestOneWaySend(t *testing.T) {
 
 	done := make(chan bool, 1)
 	count := 10000
-	// create map of expected messages
-	messages := make(map[string]bool, count)
-	for i := 0; i < count; i += 1 {
-		messages[strconv.Itoa(1)+":"+strconv.Itoa(i)] = true
-	}
 
-	go receive(receiver.Inbox(), messages, done)
+	record := make([]uint32, count)
+
+	go receive(receiver.Inbox(), record, count, 2, done)
 	go sendMessages(sender.Outbox(), count, 2, 1)
 	select {
 	case <-done:

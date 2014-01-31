@@ -3,7 +3,6 @@ package cluster
 import (
 	"fmt"
 	"strconv"
-	"strings"
 	"testing"
 	"time"
 )
@@ -37,25 +36,10 @@ func TestMutliBroadcast(t *testing.T) {
 	count := 10000
 	done := make(chan bool, serverCount)
 
-	// master map contains all possible messages
-	masterMap := make(map[string]bool, count)
-
-	for i := 1; i <= 5; i += 1 {
-		for id := 0; id < count; id += 1 {
-			masterMap[strconv.Itoa(i)+":"+strconv.Itoa(id)] = true
-		}
-	}
-
 	for i := 1; i <= serverCount; i += 1 {
 		// create custom map for each receiver
-		messages := make(map[string]bool, (serverCount-1)*count)
-		base := strconv.Itoa(i) + ":"
-		for key, value := range masterMap {
-			if strings.HasPrefix(key, base) != true {
-				messages[key] = value
-			}
-		}
-		go receive(servers[i].Inbox(), messages, done)
+		record := make([]uint32, count)
+		go receive(servers[i].Inbox(), record, count, serverCount, done)
 	}
 
 	for i := 1; i <= serverCount; i += 1 {
@@ -77,4 +61,17 @@ func TestMutliBroadcast(t *testing.T) {
 		}
 	}
 	fmt.Println("TestMultiBroadcast passed successfully")
+}
+
+
+
+// NumberOfBitsSet uses Kerninghan's method to count number of
+// bits set Given a uint32 number, it returns number of bits set
+func NumberOfBitsSet(l uint32) int {
+	count := 0
+	for l != 0 {
+		l = l & (l - 1)
+		count++
+	}
+	return count
 }
