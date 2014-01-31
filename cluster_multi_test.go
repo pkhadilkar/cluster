@@ -63,8 +63,6 @@ func TestMutliBroadcast(t *testing.T) {
 	fmt.Println("TestMultiBroadcast passed successfully")
 }
 
-
-
 // NumberOfBitsSet uses Kerninghan's method to count number of
 // bits set Given a uint32 number, it returns number of bits set
 func NumberOfBitsSet(l uint32) int {

@@ -33,6 +33,9 @@ If you write additional test cases, ensure that port numbers are not same as the
 + **Large message send**:
 This test case sends 5000 messages, each of size 10^7 (~10 MB) from one server to another.
 
++ **Ring Order Messages** :
+ This test case creates 1000 servers and connects them logically in the form of a ring. Server i forwards messages it receives to Server (i + 1). The first server sends 1000 messages and confirms that it receives all the messages .
+
 Architecture
 ---------------
 ClusterTalk consists of several components
