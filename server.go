@@ -13,7 +13,7 @@ import (
 )
 
 // buffer size for inbox and outbox channels
-const bufferSize = 100
+const bufferSize = 1000
 
 // serverImpl is a type that implements server interface
 type serverImpl struct {

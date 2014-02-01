@@ -41,7 +41,6 @@ func acceptClusterMember(port int) {
 
 		member, err := BytesToClusterMember(msg)
 		if err == nil {
-			fmt.Println("acceptClusterMember : Adding member", member)
 			recordMember(member, &catalog)
 		} else {
 			fmt.Println("Received object which is not of type ClusterMember")
