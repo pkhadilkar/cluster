@@ -33,10 +33,11 @@ func (s *serverImpl) handleInPort() {
 		if err != nil {
 			fmt.Println("Error in handleInPort ", err.Error())
 		}
-		s.inbox <- BytesToEnvelope(msg)
+
 		//		fmt.Println("handleInPort: Message ", BytesToEnvelope(msg))
 		responder.Send("1", 0)
 		//		fmt.Println("handleInPort: sent reply")
+		s.inbox <- BytesToEnvelope(msg)
 	}
 }
 
@@ -46,6 +47,7 @@ func (s *serverImpl) handleOutPort() {
 	// initial cache refresh
 	s.addressOf = make(map[int]string)
 	s.refreshPeerCache(BROADCAST)
+	peerSocketCache := make(map[int]*zmq.Socket)
 
 	for {
 		msg := <-s.outbox
@@ -62,12 +64,11 @@ func (s *serverImpl) handleOutPort() {
 		}
 
 		if msg.Pid != BROADCAST {
-			receivers.PushBack(s.addressOf[msg.Pid])
+			receivers.PushBack(msg.Pid)
 		} else {
-			//			fmt.Println("Sending broadcast to ", s.addressOf)
-			for key, value := range s.addressOf {
+			for key, _ := range s.addressOf {
 				if key != s.pid {
-					receivers.PushBack(value)
+					receivers.PushBack(key)
 				}
 			}
 		}
@@ -75,26 +76,34 @@ func (s *serverImpl) handleOutPort() {
 		// receiving server will then find correct Pid
 		msg.Pid = s.Pid()
 		// send message to receivers
-		for socket := receivers.Front(); socket != nil; socket = socket.Next() {
-			requester, err := zmq.NewSocket(zmq.REQ)
-			if err != nil {
-				fmt.Println("Error in creating request socket. ", err.Error())
-				return
+		gobbedMessage := EnvelopeToBytes(msg)
+		for pid := receivers.Front(); pid != nil; pid = pid.Next() {
+			// cache connections to peers
+			var requester *zmq.Socket
+			var ok bool
+			var err error
+			pidInt := 0
+			if pidInt, ok = pid.Value.(int); ok {
 			}
-			if socketStr, ok := socket.Value.(string); ok {
-				//	fmt.Println("handleOutPort: ", s.pid , " sending message to ", string(socketStr))
-				requester.Connect("tcp://" + string(socketStr))
-				requester.SendBytes(EnvelopeToBytes(msg), 0)
-				//	fmt.Println("handleOutPort: ", s.pid, " message sent")
-				_, err := requester.Recv(0)
-				//	fmt.Println("handleOutPort: ", s.pid, " received reply")
+
+			if requester, ok = peerSocketCache[pidInt]; !ok {
+				requester, err = zmq.NewSocket(zmq.REQ)
 				if err != nil {
-					fmt.Println("error in send", err.Error())
-					requester.Close()
-					break
+					fmt.Println("Error in creating request socket. ", err.Error())
+					return
 				}
+				peerSocketCache[pidInt] = requester
+				socketStr := s.addressOf[pidInt]
+				requester.Connect("tcp://" + socketStr)
 			}
-			requester.Close()
+
+			requester.SendBytes(gobbedMessage, 0)
+			_, err = requester.Recv(0)
+			if err != nil {
+				fmt.Println("error in send", err.Error())
+				requester.Close()
+				break
+			}
 		}
 
 	}
