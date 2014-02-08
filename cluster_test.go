@@ -10,8 +10,8 @@ import (
 	"time"
 )
 
-const delayInMillis = 50
-
+const delayInMillis = 100
+const RELIABILITY = 0.95 // if m messages are sent m * RELIABILITY messages are expected to be received for tests
 // TODO: Add error handling to tests
 
 // sendMessage sends "count" number of messages on channel
@@ -20,7 +20,7 @@ const delayInMillis = 50
 func sendMessages(outbox chan *Envelope, count int, to int, from int) {
 	for i := 0; i < count; i += 1 {
 		outbox <- &Envelope{Pid: to, Msg: strconv.Itoa(from) + ":" + strconv.Itoa(i)}
-		if i%10 == 0 {
+		if i%100 == 0 {
 			//			fmt.Println("Sender sleeping ", i)
 			time.Sleep(delayInMillis * time.Millisecond)
 		}
@@ -36,7 +36,9 @@ func sendMessages(outbox chan *Envelope, count int, to int, from int) {
 // and set a bit corresponding to server in slot for msgId. For each
 // server, we check that for each slot, the number of bits set is
 // equal to (serverCount - 1) (since server does not receive its
-// own broadcast.
+// own broadcast. 
+// NOTE: Since cluster is an unreliable transport the tests
+// only check that count * RELIABILITY messages are received
 // Parameters:
 // inbox         : Server inbox channel
 // record        : Temp array to store information about received messages
@@ -44,9 +46,11 @@ func sendMessages(outbox chan *Envelope, count int, to int, from int) {
 // serverCount   : Total number of servers in the cluster
 // done          : Channel to write to when the server receives all expected
 //                 messages
+//
 func receive(inbox chan *Envelope, record []uint32, count int, serverCount int, done chan bool) {
-	receivedCount := count
+	receivedCount := 0
 	smallestCount := uint32((1 << (uint(serverCount) - 1)) - 1)
+	threshold := int(float32(count) * RELIABILITY)
 	for {
 		envelope := <-inbox
 
@@ -59,15 +63,16 @@ func receive(inbox chan *Envelope, record []uint32, count int, serverCount int, 
 			//fmt.Println(record[msgId] , "\t" , smallestCount)
 			if record[msgId] >= smallestCount && NumberOfBitsSet(record[msgId]) == serverCount-1 {
 				//fmt.Println(record[msgId])
-				receivedCount--
+				receivedCount++
 			}
 		}
 
-		if receivedCount == 0 {
-			break
+		if receivedCount >= threshold {
+			// do not break from the loop here
+			// if reliability is low senders might block if receivers quit early
+			done <- true
 		}
 	}
-	done <- true
 }
 
 // TestOnwaySend creates two servers, sends large number of messages

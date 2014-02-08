@@ -5,7 +5,7 @@ package cluster
 // network
 
 // TODO: Handle errors from handleInPort and handleOutPort
-// TODO: Handle blocking that might occur when sender is not up (Use select)
+// TODO: Find alternate method to store list of peers in handleOutport. Doing list.New() for each message is expensive
 
 import (
 	"container/list"
@@ -18,7 +18,7 @@ import (
 // to channel inbox. It assumes that messages received are gob
 // encoded objects of the type Envelope
 func (s *serverImpl) handleInPort() {
-	responder, err := zmq.NewSocket(zmq.REP)
+	responder, err := zmq.NewSocket(zmq.PULL)
 	if err != nil {
 		fmt.Println("Error in creating socket.", err)
 		return
@@ -35,7 +35,6 @@ func (s *serverImpl) handleInPort() {
 		}
 
 		//		fmt.Println("handleInPort: Message ", BytesToEnvelope(msg))
-		responder.Send("1", 0)
 		//		fmt.Println("handleInPort: sent reply")
 		s.inbox <- BytesToEnvelope(msg)
 	}
@@ -87,7 +86,7 @@ func (s *serverImpl) handleOutPort() {
 			}
 
 			if requester, ok = peerSocketCache[pidInt]; !ok {
-				requester, err = zmq.NewSocket(zmq.REQ)
+				requester, err = zmq.NewSocket(zmq.PUSH)
 				if err != nil {
 					fmt.Println("Error in creating request socket. ", err.Error())
 					return
@@ -95,15 +94,10 @@ func (s *serverImpl) handleOutPort() {
 				peerSocketCache[pidInt] = requester
 				socketStr := s.addressOf[pidInt]
 				requester.Connect("tcp://" + socketStr)
+				defer requester.Close()
 			}
 
 			requester.SendBytes(gobbedMessage, 0)
-			_, err = requester.Recv(0)
-			if err != nil {
-				fmt.Println("error in send", err.Error())
-				requester.Close()
-				break
-			}
 		}
 
 	}
