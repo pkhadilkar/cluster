@@ -63,6 +63,17 @@ func (s *serverImpl) Pid() int {
 }
 
 func (s *serverImpl) Peers() []int {
+	err := s.refreshPeerCache(BROADCAST)
+	if err != nil {
+		fmt.Println("Could not refresh peer cache." + err.Error())
+		return nil
+	}
+	s.peers = make([]int, len(s.addressOf))
+	i := 0
+	for key, _ := range s.addressOf {
+		s.peers[i] = key
+		i++
+	}
 	return s.peers
 }
 
