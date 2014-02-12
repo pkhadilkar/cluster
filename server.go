@@ -132,6 +132,7 @@ func NewProxy(configPath string) error {
 	if err != nil {
 		return err
 	}
+	// TODO: Should call NewProxyWithConfig from here
 	memberPort := getPort(conf.MemberRegSocket)
 	peerPort := getPort(conf.PeerSocket)
 	// current implementation requires both acceptor and
@@ -146,4 +147,15 @@ func NewProxy(configPath string) error {
 func getPort(socket string) int {
 	s, _ := strconv.ParseInt(strings.Split(socket, ":")[1], 10, 0)
 	return int(s)
+}
+
+// NewProxyWithConfig provides a helper method
+// for creating proxies programmatically
+func NewProxyWithConfig(conf *Config) {
+	memberPort := getPort(conf.MemberRegSocket)
+	peerPort := getPort(conf.PeerSocket)
+	// current implementation requires both acceptor and
+	// peer server to be on the same machine
+	go acceptClusterMember(memberPort)
+	go sendClusterMembers(peerPort)
 }
