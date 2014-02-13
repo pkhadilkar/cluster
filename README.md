@@ -54,4 +54,9 @@ Config File
 ---------------
 Configuration file is in JSON format. Configuration file stores socket endpoints for member registration and peer information servers.
 
+
+Data Types
+------------
+Envelope struct accepts any type of message. Type of Msg is interface{}. ClusterTalk internally uses GOB encoding/ decoding to send messages across servers in cluster. Interface encoding/ decoding in GOB requires "register"ing types with gob before Encoder and Decoder are created. Since we want to allow arbitrary message types, it is not possible to register types in advance. Thus, users of the library should encode their data in a format that provides string representation and then use that as Msg field in Envelope.
+
 ~Pushkar Khadilkar
