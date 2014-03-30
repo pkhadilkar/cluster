@@ -9,13 +9,13 @@ import (
 
 /*
 TestMultiSendReceive creates serverCount = 5 servers. Each server broadcasts
-msgCount = 10000 messages. Receivers check whether they receive
+msgCount = 1000 messages. Receivers check whether they receive
 (serverCount - 1) * msgCount messages. The msg sending works fast, verification
 of received messages takes time and memory
 */
 func TestMutliBroadcast(t *testing.T) {
 	fmt.Println("Starting multibroadcast test. Be patient, the test can run for several minutes.")
-	fmt.Println("MultiBroadcastTest broadcasts 10k messages from each of the five servers launched.")
+	fmt.Println("MultiBroadcastTest broadcasts 1k messages from each of the five servers launched.")
 	fmt.Println("Each server checks that it has received each of the 40k messages it expects exactly once.")
 	conf := Config{MemberRegSocket: "127.0.0.1:9999", PeerSocket: "127.0.0.1:9009"}
 
@@ -26,7 +26,7 @@ func TestMutliBroadcast(t *testing.T) {
 	serverCount := 5
 	servers := make([]Server, 10)
 	for i := 1; i <= serverCount; i += 1 {
-		s, err := NewWithConfig(i, "127.0.0.1", 5001+i, &conf)
+		s, err := NewWithConfig(i, "127.0.0.1", 5101+i, &conf)
 		if err != nil {
 			t.Errorf("Error in creating server ", err.Error())
 		}

@@ -44,7 +44,7 @@ func (s *serverImpl) handleInPort() {
 func (s *serverImpl) handleOutPort() {
 	//	fmt.Println("handleOutPort: Waiting for message on outbox")
 	// initial cache refresh
-	s.addressOf = make(map[int]string)
+	s.setAddressOf(make(map[int]string))
 	s.refreshPeerCache(BROADCAST)
 	peerSocketCache := make(map[int]*zmq.Socket)
 
@@ -53,10 +53,10 @@ func (s *serverImpl) handleOutPort() {
 
 		receivers := list.New()
 		// BROADCAST packet or packet for new server
-		if _, ok := s.addressOf[msg.Pid]; !ok {
+		if _, ok := s.address(msg.Pid); !ok {
 			s.refreshPeerCache(msg.Pid)
 			// packet is dropped silently
-			if _, ok := s.addressOf[msg.Pid]; !ok && msg.Pid != BROADCAST {
+			if _, ok := s.address(msg.Pid); !ok && msg.Pid != BROADCAST {
 				fmt.Println("Address of ", msg.Pid, " could not be found")
 				continue
 			}
@@ -65,11 +65,13 @@ func (s *serverImpl) handleOutPort() {
 		if msg.Pid != BROADCAST {
 			receivers.PushBack(msg.Pid)
 		} else {
+			s.RLock()
 			for key, _ := range s.addressOf {
 				if key != s.pid {
 					receivers.PushBack(key)
 				}
 			}
+			s.RUnlock()
 		}
 		// change msg.Pid to match this server
 		// receiving server will then find correct Pid
@@ -92,7 +94,7 @@ func (s *serverImpl) handleOutPort() {
 					return
 				}
 				peerSocketCache[pidInt] = requester
-				socketStr := s.addressOf[pidInt]
+				socketStr, _ := s.address(pidInt)
 				requester.Connect("tcp://" + socketStr)
 				defer requester.Close()
 			}
@@ -138,10 +140,9 @@ func (s *serverImpl) refreshPeerCache(pid int) error {
 			requester.Close()
 			continue
 		}
-		//		fmt.Println("Received catalog is ", catalog)
-		// found required entry
+		
 		if _, ok := catalog.Records[pid]; ok || pid == BROADCAST {
-			s.addressOf = catalog.Records
+			s.setAddressOf(catalog.Records)
 			requester.Close()
 			return nil
 		}

@@ -10,6 +10,7 @@ import (
 	zmq "github.com/pebbe/zmq4"
 	"strconv"
 	"strings"
+	"sync"
 )
 
 // buffer size for inbox and outbox channels
@@ -26,6 +27,7 @@ type serverImpl struct {
 	addressOf       map[int]string // map to get hostname/ IP address given PID
 	memberRegSocket string         //socket to connect to , to register new server
 	peerSocket      string         // socket to contact to get list of peers
+	sync.RWMutex // Mutex to protect addressOf map
 }
 
 const retryCount = 100 //retry count to contact registration server
@@ -68,21 +70,39 @@ func (s *serverImpl) Peers() []int {
 		fmt.Println("Could not refresh peer cache." + err.Error())
 		return nil
 	}
+	s.Lock()
 	s.peers = make([]int, len(s.addressOf))
+	s.Unlock()
 	i := 0
+	s.RLock()
 	for key, _ := range s.addressOf {
 		s.peers[i] = key
 		i++
 	}
+	s.RUnlock()
 	return s.peers
 }
-
+// Outbox returns channel that can be used to send messages to other servers
 func (s *serverImpl) Outbox() chan *Envelope {
 	return s.outbox
 }
-
+// Inbox returns channel that receives messages from other servers
 func (s *serverImpl) Inbox() chan *Envelope {
 	return s.inbox
+}
+
+// setAddressOf sets the map between pids and hostnames / ip addresses
+func (s *serverImpl) setAddressOf(newmap map[int]string) {
+	s.Lock()
+	s.addressOf = newmap
+	s.Unlock()
+}
+
+func (s *serverImpl) address(pid int) (string, bool) {
+	s.RLock()
+	defer s.RUnlock()
+	address, ok := s.addressOf[pid]
+	return address, ok
 }
 
 func initializeServer(selfId int, selfIP string, selfPort int, conf *Config) (Server, error) {

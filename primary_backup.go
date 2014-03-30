@@ -16,14 +16,16 @@ import (
 
 type Catalog struct {
 	Records map[int]string
-	mutex   sync.Mutex
+	mutex sync.RWMutex
 }
 
 var catalog = Catalog{}
 
 // acceptClusterMember accepts requests about newly joined servers in the cluster
 func acceptClusterMember(port int) {
+	catalog.mutex.Lock()
 	catalog.Records = make(map[int]string)
+	catalog.mutex.Unlock()
 	responder, err := zmq.NewSocket(zmq.REP)
 	if err != nil {
 		// TODO: replace this with error channel
@@ -67,16 +69,13 @@ func sendClusterMembers(port int) {
 	defer responder.Close()
 	responder.Bind("tcp://*:" + strconv.Itoa(port))
 	for {
-		//		fmt.Println("sendClusterMembers: Waiting for request for sendClusterMembers")
-		//     	 fmt.Println("Waiting to receive message from socket")
 		if _, err = responder.RecvBytes(0); err != nil {
 			fmt.Println("Error in sendClusterMembers", err.Error())
 		}
 
-		catalog.mutex.Lock()
+		catalog.mutex.RLock()
 		buf := CatalogToBytes(&catalog)
-		catalog.mutex.Unlock()
-		//		fmt.Println("sendClusterMembers: sending ", catalog)
+		catalog.mutex.RUnlock()
 		responder.SendBytes(buf, 0)
 	}
 }
